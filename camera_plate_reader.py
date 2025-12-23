@@ -147,10 +147,13 @@ class CameraPlateReader:
             # Try OCR on preprocessed image
             text = pytesseract.image_to_string(thresh, config='--psm 8 --oem 3')
 
-            # Clean up the text - remove spaces and special characters
-            cleaned_text = re.sub(r'[^A-Z0-9]', '', text.upper())
+            # Clean up the text - keep only letters, numbers, and spaces, convert to uppercase
+            cleaned_text = re.sub(r'[^A-Z0-9\s]', '', text.upper())
+            # Remove extra whitespace and normalize to single space
+            cleaned_text = ' '.join(cleaned_text.split())
 
-            # Validate plate format: 3 letters + 4 numbers (e.g., ABC1234)
+            # Validate plate format: 3 letters + space + 4 numbers (e.g., ABC 1234)
+            # Space is optional in case OCR doesn't detect it
             match = re.match(config.PLATE_FORMAT_PATTERN, cleaned_text)
 
             if match:
@@ -159,7 +162,7 @@ class CameraPlateReader:
                 return plate_number
             else:
                 print(f"✗ Invalid plate format detected: '{cleaned_text}'")
-                print(f"   Expected format: 3 letters + 4 numbers (e.g., ABC1234)")
+                print(f"   Expected format: 3 letters + 4 numbers (e.g., ABC 1234)")
                 return None
 
         except Exception as e:
