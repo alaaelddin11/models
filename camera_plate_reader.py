@@ -141,16 +141,20 @@ class CameraPlateReader:
             # Apply Otsu's thresholding
             _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-            # Use pytesseract to extract text
-            print("🔍 Reading license plate...")
+            # Use pytesseract to extract text - read everything in the image
+            print("🔍 Reading text from image...")
 
-            # Try OCR on preprocessed image
-            text = pytesseract.image_to_string(thresh, config='--psm 8 --oem 3')
+            # Try OCR on preprocessed image - PSM 6 reads any text block
+            text = pytesseract.image_to_string(thresh, config='--psm 6 --oem 3')
+
+            print(f"📝 Raw OCR result: '{text.strip()}'")
 
             # Clean up the text - keep only letters, numbers, and spaces, convert to uppercase
             cleaned_text = re.sub(r'[^A-Z0-9\s]', '', text.upper())
             # Remove extra whitespace and normalize to single space
             cleaned_text = ' '.join(cleaned_text.split())
+
+            print(f"🧹 Cleaned text: '{cleaned_text}'")
 
             # Validate plate format: 3 letters + space + 4 numbers (e.g., ABC 1234)
             # Space is optional in case OCR doesn't detect it
