@@ -29,6 +29,10 @@ CAMERA_DELAY_SECONDS = 10  # Wait 10 seconds before taking picture
 CAMERA_RUNTIME_SECONDS = 60  # Keep camera active for 1 minute
 IMAGE_PATH = "/tmp/plate_image.jpg"
 
+# License Plate Format Validation
+# Expected format: 3 letters followed by 4 numbers (e.g., ABC1234)
+PLATE_FORMAT_PATTERN = r'^[A-Z]{3}[0-9]{4}$'
+
 # Servo Motor Settings
 GATE_OPEN_TIME_SECONDS = 20  # Keep gate open for 20 seconds
 SERVO_OPEN_ANGLE = 90  # Angle to open gate

@@ -148,13 +148,18 @@ class CameraPlateReader:
             text = pytesseract.image_to_string(thresh, config='--psm 8 --oem 3')
 
             # Clean up the text - remove spaces and special characters
-            plate_number = re.sub(r'[^A-Z0-9]', '', text.upper())
+            cleaned_text = re.sub(r'[^A-Z0-9]', '', text.upper())
 
-            if plate_number:
-                print(f"✓ Detected plate number: {plate_number}")
+            # Validate plate format: 3 letters + 4 numbers (e.g., ABC1234)
+            match = re.match(config.PLATE_FORMAT_PATTERN, cleaned_text)
+
+            if match:
+                plate_number = cleaned_text
+                print(f"✓ Detected valid plate number: {plate_number}")
                 return plate_number
             else:
-                print("✗ No plate number detected")
+                print(f"✗ Invalid plate format detected: '{cleaned_text}'")
+                print(f"   Expected format: 3 letters + 4 numbers (e.g., ABC1234)")
                 return None
 
         except Exception as e:
