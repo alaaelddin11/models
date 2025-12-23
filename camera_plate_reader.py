@@ -134,15 +134,18 @@ class CameraPlateReader:
             # Convert to grayscale
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-            # Apply image preprocessing for better OCR
-            gray = cv2.bilateralFilter(gray, 11, 17, 17)
-            edged = cv2.Canny(gray, 30, 200)
+            # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
+            clahe = cv2.createCLAHE(3.0, (8, 8))
+            gray = clahe.apply(gray)
+
+            # Apply Otsu's thresholding
+            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
             # Use pytesseract to extract text
             print("🔍 Reading license plate...")
 
-            # Try OCR on original grayscale image
-            text = pytesseract.image_to_string(gray, config='--psm 8 --oem 3')
+            # Try OCR on preprocessed image
+            text = pytesseract.image_to_string(thresh, config='--psm 8 --oem 3')
 
             # Clean up the text - remove spaces and special characters
             plate_number = re.sub(r'[^A-Z0-9]', '', text.upper())
