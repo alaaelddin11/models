@@ -28,6 +28,7 @@ SERVO_PIN = 18
 CAMERA_DELAY_SECONDS = 10  # Wait 10 seconds before taking picture
 CAMERA_RUNTIME_SECONDS = 60  # Keep camera active for 1 minute
 IMAGE_PATH = "/tmp/plate_image.jpg"
+SHOW_CAMERA_PREVIEW = True  # Set to False if running headless (no display)
 
 # License Plate Format Validation
 # Expected format: 3 letters, space, 4 numbers (e.g., ABC 1234)

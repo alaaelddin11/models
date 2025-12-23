@@ -89,8 +89,7 @@ class CameraPlateReader:
         Returns path to captured image or None if failed
         """
         try:
-            print(f"📷 Waiting {config.CAMERA_DELAY_SECONDS} seconds before capturing image...")
-            time.sleep(config.CAMERA_DELAY_SECONDS)
+            print(f"📷 Starting camera preview...")
 
             # Open camera
             cap = cv2.VideoCapture(0)
@@ -101,14 +100,39 @@ class CameraPlateReader:
             # Allow camera to warm up
             time.sleep(1)
 
-            # Capture frame
+            print(f"⏱ Waiting {config.CAMERA_DELAY_SECONDS} seconds - Position the plate in view...")
+
+            # Show live preview for the delay duration
+            start_time = time.time()
+            frame = None
+
+            while time.time() - start_time < config.CAMERA_DELAY_SECONDS:
+                ret, frame = cap.read()
+                if ret:
+                    if config.SHOW_CAMERA_PREVIEW:
+                        # Show countdown on frame
+                        remaining = int(config.CAMERA_DELAY_SECONDS - (time.time() - start_time))
+                        display_frame = frame.copy()
+                        cv2.putText(display_frame, f"Capturing in: {remaining}s", (10, 30),
+                                   cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                        cv2.imshow('Camera Preview - Position License Plate', display_frame)
+                        cv2.waitKey(1)
+
+            # Capture final frame
             print("📸 Capturing image...")
             ret, frame = cap.read()
             cap.release()
 
             if not ret:
                 print("✗ Failed to capture image")
+                if config.SHOW_CAMERA_PREVIEW:
+                    cv2.destroyAllWindows()
                 return None
+
+            # Display captured image
+            if config.SHOW_CAMERA_PREVIEW:
+                cv2.imshow('Captured Image', frame)
+                cv2.waitKey(2000)  # Show for 2 seconds
 
             # Save image
             cv2.imwrite(config.IMAGE_PATH, frame)
@@ -117,6 +141,7 @@ class CameraPlateReader:
 
         except Exception as e:
             print(f"Error capturing image: {e}")
+            cv2.destroyAllWindows()
             return None
 
     def read_plate_number(self, image_path):
@@ -141,6 +166,12 @@ class CameraPlateReader:
             # Apply Otsu's thresholding
             _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
+            # Show processing steps
+            if config.SHOW_CAMERA_PREVIEW:
+                cv2.imshow('1. Grayscale + CLAHE', gray)
+                cv2.imshow('2. Thresholded (OCR Input)', thresh)
+                cv2.waitKey(2000)  # Show for 2 seconds
+
             # Use pytesseract to extract text - read everything in the image
             print("🔍 Reading text from image...")
 
@@ -160,6 +191,10 @@ class CameraPlateReader:
             # Space is optional in case OCR doesn't detect it
             match = re.match(config.PLATE_FORMAT_PATTERN, cleaned_text)
 
+            # Close all windows after processing
+            if config.SHOW_CAMERA_PREVIEW:
+                cv2.destroyAllWindows()
+
             if match:
                 plate_number = cleaned_text
                 print(f"✓ Detected valid plate number: {plate_number}")
@@ -171,6 +206,8 @@ class CameraPlateReader:
 
         except Exception as e:
             print(f"Error reading plate number: {e}")
+            if config.SHOW_CAMERA_PREVIEW:
+                cv2.destroyAllWindows()
             return None
 
     def check_vehicle_access(self, plate_number):
